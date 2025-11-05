@@ -155,32 +155,6 @@ Los presets te permiten guardar configuraciones de filtros que uses frecuentemen
 
 Esta herramienta está altamente optimizada para manejar millones de filas:
 
-### 🚀 Estrategias de Optimización
-
-1. **Procesamiento Paralelo**: DuckDB utiliza 8 threads para procesar datos simultáneamente
-2. **Conteo Rápido**: Muestra el total de filas que coinciden con los filtros en segundos (sin cargar datos)
-3. **Smart Sampling**: Para datasets > 1,000,000 filas, ofrece muestreo aleatorio automático
-   - Visualiza 100,000 filas representativas de millones en segundos
-   - El muestreo es configurable (10K - 10M filas)
-4. **Agregaciones Rápidas**: Todas las operaciones (SUM, AVG, COUNT, GROUP BY) se ejecutan sobre datos cacheados
-   - Operaciones instantáneas en memoria con Pandas
-   - No hay queries adicionales después de cargar datos
-5. **Filtros Manuales**: Entrada manual de valores para filtros - sin queries lentas de búsqueda
-6. **Lectura Optimizada**: 
-   - `parallel=true` en lectura de CSV
-   - 8GB de memoria asignada a DuckDB
-   - Uso de directorio temporal para operaciones grandes
-
-### 💡 Consejos para Mejor Rendimiento
-
-- **Usa el botón RUN QUERY**: Carga los datos UNA SOLA VEZ - todas las operaciones y gráficos usan los datos cacheados
-- **Configura TODO antes de ejecutar**: Cambia columnas, filtros y límites SIN ejecutar queries innecesarias
-- **Activa Smart Sampling** cuando trabajes con > 1 millón de filas para visualización
-- **Operaciones son instantáneas**: Todas las operaciones (suma, promedio, group by) trabajan sobre los datos ya cargados
-- **Sin esperas al cambiar pestañas**: Data View, Visualizations, Operations y Export usan los mismos datos cacheados
-- **Para datasets completos**: Carga las filas que necesites (hasta 10 millones) con RUN QUERY
-- **Filtros manuales**: Escribe los valores directamente - no hay búsquedas automáticas lentas
-
 ## Notas importantes
 
 - La aplicación no modifica tus archivos CSV originales
