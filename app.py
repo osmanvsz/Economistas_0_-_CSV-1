@@ -315,29 +315,35 @@ def main():
     
     # Date range filter
     st.sidebar.subheader("Date Range")
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        start_date = st.date_input(
-            "Start Date",
-            value=st.session_state.date_range[0] if st.session_state.date_range[0] else None,
-            min_value=date(1990, 1, 1),
-            max_value=date(2030, 12, 31),
-            key="start_date"
-        )
-    with col2:
-        end_date = st.date_input(
-            "End Date",
-            value=st.session_state.date_range[1] if st.session_state.date_range[1] else None,
-            min_value=date(1990, 1, 1),
-            max_value=date(2030, 12, 31),
-            key="end_date"
-        )
+    use_date_filter = st.sidebar.checkbox("Enable date filter", value=False, key="use_date_filter")
     
-    date_range = (
-        start_date.strftime("%Y-%m-%d") if start_date else None,
-        end_date.strftime("%Y-%m-%d") if end_date else None
-    )
-    st.session_state.date_range = date_range
+    if use_date_filter:
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            start_date = st.date_input(
+                "Start Date",
+                value=date(2000, 1, 1),
+                min_value=date(1990, 1, 1),
+                max_value=date(2030, 12, 31),
+                key="start_date"
+            )
+        with col2:
+            end_date = st.date_input(
+                "End Date",
+                value=date(2030, 12, 31),
+                min_value=date(1990, 1, 1),
+                max_value=date(2030, 12, 31),
+                key="end_date"
+            )
+        
+        date_range = (
+            start_date.strftime("%Y-%m-%d") if start_date else None,
+            end_date.strftime("%Y-%m-%d") if end_date else None
+        )
+        st.session_state.date_range = date_range
+    else:
+        date_range = (None, None)
+        st.session_state.date_range = date_range
     
     # Column filters
     st.sidebar.subheader("Column Filters")

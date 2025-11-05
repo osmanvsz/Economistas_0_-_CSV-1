@@ -63,7 +63,10 @@ Si no tienes Python instalado, descárgalo desde: https://www.python.org/downloa
    - Por defecto se muestran las primeras 5 columnas
 
 3. **Aplicar filtros (opcional)**
-   - **Filtro por fechas**: Selecciona un rango de fechas
+   - **Filtro por fechas**: 
+     - Activa el checkbox "Enable date filter"
+     - Selecciona el rango de fechas deseado
+     - Desactiva el checkbox para quitar el filtro
    - **Filtros por columna**: 
      - Selecciona las columnas que quieres filtrar
      - Escribe los valores manualmente, separados por comas
