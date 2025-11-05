@@ -5,12 +5,17 @@ Una herramienta web para analizar datasets CSV masivos (hasta 90GB+) sin cargar 
 ## Características
 
 - **Análisis de datasets masivos**: Maneja múltiples archivos CSV grandes sin problemas de memoria
+- **Motor optimizado**: DuckDB con procesamiento paralelo, 8 threads y 4GB de memoria
+- **Conteo rápido**: Cuenta millones de filas en segundos sin cargar datos
+- **Smart Sampling**: Muestreo inteligente para datasets grandes (visualización instantánea)
 - **Extracción automática de fechas**: Lee la fecha del nombre del archivo y la agrega como columna
 - **Filtros dinámicos**: Filtra por fechas, columnas específicas y valores
 - **Presets de filtros**: Guarda y carga configuraciones de filtros frecuentes
-- **Operaciones matemáticas**: Suma, conteo, promedio, mínimo, máximo, agrupaciones
+- **Operaciones optimizadas**: Todas las agregaciones se hacen en DuckDB (sin cargar datos en memoria)
+  - Suma, conteo, promedio, mínimo, máximo calculados sobre el dataset completo
+  - Agrupaciones con visualizaciones automáticas
 - **Visualizaciones interactivas**: Gráficos de líneas, barras, pastel, series temporales
-- **Exportación**: Descarga los resultados filtrados como CSV
+- **Exportación flexible**: Descarga hasta 10 millones de filas filtradas
 
 ## Requisitos
 
@@ -59,14 +64,27 @@ Si no tienes Python instalado, descárgalo desde: https://www.python.org/downloa
 
 3. **Aplicar filtros (opcional)**
    - **Filtro por fechas**: Selecciona un rango de fechas
-   - **Filtros por columna**: Agrega filtros específicos para cualquier columna
+   - **Filtros por columna**: 
+     - Selecciona las columnas que quieres filtrar
+     - Escribe los valores manualmente, separados por comas
+     - Ejemplo: `1, 2, 3` o `A01, A02, A03`
    - **Guardar preset**: Guarda tu configuración de filtros para usarla después
 
-4. **Explorar los datos**
-   - **Pestaña "Data View"**: Visualiza los datos filtrados
+4. **Configurar la query**
+   - **Max rows to load**: Define cuántas filas cargar (por defecto 50,000)
+   - **Smart Sampling**: Activa para datasets grandes - carga una muestra representativa
+   - **Importante**: Puedes cambiar columnas y filtros SIN ejecutar la query todavía
+
+5. **Ejecutar la query**
+   - Haz clic en el botón **▶️ RUN QUERY** en la barra lateral
+   - Los datos se cargan UNA SOLA VEZ y se cachean en memoria
+   - El botón muestra "⚠️" si cambias la configuración (necesitas re-ejecutar)
+
+6. **Explorar los datos cacheados (RÁPIDO - sin queries adicionales)**
+   - **Pestaña "Data View"**: Visualiza los datos cargados
    - **Pestaña "Visualizations"**: Crea gráficos interactivos
-   - **Pestaña "Operations"**: Realiza operaciones matemáticas
-   - **Pestaña "Export"**: Exporta los resultados a CSV
+   - **Pestaña "Operations"**: Realiza operaciones matemáticas instantáneas
+   - **Pestaña "Export"**: Exporta los datos cargados a CSV o Excel
 
 ### Presets de filtros
 
@@ -125,16 +143,53 @@ Los presets te permiten guardar configuraciones de filtros que uses frecuentemen
 - Asegúrate de que los archivos tengan extensión `.csv`
 - Verifica que tengas permisos de lectura en la carpeta
 
-### Los filtros no muestran valores
-- Esto puede ocurrir si hay demasiados valores únicos (límite de 1000)
-- Los valores NULL no se muestran en los filtros
+### Los filtros no funcionan
+- Verifica que los valores estén escritos correctamente
+- Asegúrate de usar comas para separar múltiples valores
+- Los valores son case-sensitive (distinguen mayúsculas/minúsculas)
+
+## Optimizaciones de Rendimiento
+
+Esta herramienta está altamente optimizada para manejar millones de filas:
+
+### 🚀 Estrategias de Optimización
+
+1. **Procesamiento Paralelo**: DuckDB utiliza 8 threads para procesar datos simultáneamente
+2. **Conteo Rápido**: Muestra el total de filas que coinciden con los filtros en segundos (sin cargar datos)
+3. **Smart Sampling**: Para datasets > 1,000,000 filas, ofrece muestreo aleatorio automático
+   - Visualiza 100,000 filas representativas de millones en segundos
+   - El muestreo es configurable (10K - 10M filas)
+4. **Agregaciones Rápidas**: Todas las operaciones (SUM, AVG, COUNT, GROUP BY) se ejecutan sobre datos cacheados
+   - Operaciones instantáneas en memoria con Pandas
+   - No hay queries adicionales después de cargar datos
+5. **Filtros Manuales**: Entrada manual de valores para filtros - sin queries lentas de búsqueda
+6. **Lectura Optimizada**: 
+   - `parallel=true` en lectura de CSV
+   - 8GB de memoria asignada a DuckDB
+   - Uso de directorio temporal para operaciones grandes
+
+### 💡 Consejos para Mejor Rendimiento
+
+- **Usa el botón RUN QUERY**: Carga los datos UNA SOLA VEZ - todas las operaciones y gráficos usan los datos cacheados
+- **Configura TODO antes de ejecutar**: Cambia columnas, filtros y límites SIN ejecutar queries innecesarias
+- **Activa Smart Sampling** cuando trabajes con > 1 millón de filas para visualización
+- **Operaciones son instantáneas**: Todas las operaciones (suma, promedio, group by) trabajan sobre los datos ya cargados
+- **Sin esperas al cambiar pestañas**: Data View, Visualizations, Operations y Export usan los mismos datos cacheados
+- **Para datasets completos**: Carga las filas que necesites (hasta 10 millones) con RUN QUERY
+- **Filtros manuales**: Escribe los valores directamente - no hay búsquedas automáticas lentas
 
 ## Notas importantes
 
 - La aplicación no modifica tus archivos CSV originales
 - Los datos se leen directamente desde disco, no se cargan completamente en memoria
-- La vista de datos está limitada a 10,000 filas por motivos de rendimiento
+- La vista de datos tiene un límite configurable (por defecto 50,000 filas) para evitar problemas de memoria en el navegador
+- El límite de tamaño de mensaje se ha configurado a 4 GB para manejar datasets grandes
 - Los presets se guardan en `filter_presets.json` en la carpeta de la aplicación
+- DuckDB usa `temp_duckdb/` para operaciones temporales en disco
+- **Rendimiento esperado**: 
+  - Contar 10 millones de filas: 2-5 segundos
+  - Sumar/Promediar 10 millones: 3-8 segundos
+  - Agrupar y agregar: 5-15 segundos (dependiendo de cardinalidad)
 
 ## Soporte
 

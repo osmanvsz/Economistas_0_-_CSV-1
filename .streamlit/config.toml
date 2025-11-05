@@ -1,0 +1,13 @@
+[server]
+# Increase max message size to handle large datasets
+# Default is 200 MB, increasing to 2000 MB (2 GB)
+maxMessageSize = 4096
+
+# Enable CORS for development
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+# Automatically open browser when starting
+gatherUsageStats = false
+

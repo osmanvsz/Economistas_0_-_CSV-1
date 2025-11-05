@@ -1,2 +1,15 @@
-*.csv
-/venv
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+filter_presets.json
+temp_duckdb/
+*.log
+/data_csv
