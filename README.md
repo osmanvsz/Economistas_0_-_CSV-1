@@ -79,7 +79,7 @@ Si no tienes Python instalado, descárgalo desde: https://www.python.org/downloa
    - **Importante**: Puedes cambiar columnas y filtros SIN ejecutar la query todavía
 
 5. **Ejecutar la query**
-   - Haz clic en el botón **▶️ RUN QUERY** en la barra lateral
+   - Haz clic en el botón **RUN QUERY** en la barra lateral
    - Los datos se cargan UNA SOLA VEZ y se cachean en memoria
    - El botón muestra "⚠️" si cambias la configuración (necesitas re-ejecutar)
 
@@ -98,33 +98,6 @@ Los presets te permiten guardar configuraciones de filtros que uses frecuentemen
 3. Escribe un nombre para tu preset y haz clic en "Save Preset"
 4. Para cargar un preset, selecciónalo del menú desplegable "Load Preset"
 5. Para eliminar un preset, selecciónalo y haz clic en el ícono de papelera 🗑️
-
-## Ejemplos de uso
-
-### Análisis básico
-1. Selecciona las columnas de interés
-2. Ve a la pestaña "Operations"
-3. Selecciona "Summary Statistics" para ver estadísticas descriptivas
-
-### Crear visualizaciones
-1. Aplica los filtros necesarios
-2. Ve a la pestaña "Visualizations"
-3. Selecciona el tipo de gráfico que deseas
-4. Configura los ejes y columnas
-
-### Exportar datos filtrados
-1. Aplica todos los filtros necesarios
-2. Ve a la pestaña "Export"
-3. Define cuántas filas quieres exportar
-4. Haz clic en "Generate CSV for Download"
-5. Descarga el archivo CSV
-
-## Tecnologías utilizadas
-
-- **Streamlit**: Interfaz web interactiva
-- **DuckDB**: Motor de consultas analíticas que lee CSV sin cargarlos en memoria
-- **Pandas**: Manipulación de datos
-- **Plotly**: Visualizaciones interactivas
 
 ## Solución de problemas
 
@@ -170,7 +143,7 @@ Esta herramienta está altamente optimizada para manejar millones de filas:
 
 ## Soporte
 
-Si encuentras algún problema o tienes preguntas, contacta al desarrollador del proyecto.
+Si encuentras algún problema o tienes preguntas, contacta al desarrollador del proyecto (o a Diegus).
 
 ## Licencia
 
