@@ -377,11 +377,22 @@ def main():
     
     # Clear filters button
     if st.sidebar.button("Clear All Filters"):
+        # Clear all filter-related session state
         st.session_state.filters = {}
         st.session_state.date_range = (None, None)
         st.session_state.current_preset = None
         st.session_state.cached_results = None
         st.session_state.last_config = None
+        
+        # Clear all widget states (delete keys so they reset to default values)
+        keys_to_remove = [key for key in st.session_state.keys() 
+                          if key.startswith('filter_') or 
+                          key == 'use_date_filter' or
+                          key == 'start_date' or
+                          key == 'end_date']
+        for key in keys_to_remove:
+            del st.session_state[key]
+        
         st.rerun()
     
     # Query configuration section
