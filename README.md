@@ -58,11 +58,17 @@ Si no tienes Python instalado, descárgalo desde: https://www.python.org/downloa
    - En la barra lateral, ingresa la ruta completa a la carpeta que contiene tus archivos CSV
    - Ejemplo: `C:\Users\TuUsuario\Documents\datos_csv`
 
-2. **Seleccionar columnas**
+2. **(Opcional) Excluir archivos problemáticos**
+   - Si algún archivo da error, expande "Exclude Problematic Files"
+   - Haz clic en "Auto-Detect" para detectar automáticamente archivos con problemas
+   - O escribe manualmente los nombres de archivos a excluir (uno por línea)
+   - Haz clic en "Apply"
+
+3. **Seleccionar columnas**
    - Marca las columnas que quieres analizar
    - Por defecto se muestran las primeras 5 columnas
 
-3. **Aplicar filtros (opcional)**
+4. **Aplicar filtros (opcional)**
    - **Filtro por fechas**: 
      - Activa el checkbox "Enable date filter"
      - Selecciona el rango de fechas deseado
@@ -73,17 +79,17 @@ Si no tienes Python instalado, descárgalo desde: https://www.python.org/downloa
      - Ejemplo: `1, 2, 3` o `A01, A02, A03`
    - **Guardar preset**: Guarda tu configuración de filtros para usarla después
 
-4. **Configurar la query**
+5. **Configurar la query**
    - **Max rows to load**: Define cuántas filas cargar (por defecto 50,000)
    - **Smart Sampling**: Activa para datasets grandes - carga una muestra representativa
    - **Importante**: Puedes cambiar columnas y filtros SIN ejecutar la query todavía
 
-5. **Ejecutar la query**
+6. **Ejecutar la query**
    - Haz clic en el botón **RUN QUERY** en la barra lateral
    - Los datos se cargan UNA SOLA VEZ y se cachean en memoria
-   - El botón muestra "⚠️" si cambias la configuración (necesitas re-ejecutar)
+   - El botón muestra advertencia si cambias la configuración (necesitas re-ejecutar)
 
-6. **Explorar los datos cacheados (RÁPIDO - sin queries adicionales)**
+7. **Explorar los datos cacheados (RÁPIDO - sin queries adicionales)**
    - **Pestaña "Data View"**: Visualiza los datos cargados
    - **Pestaña "Visualizations"**: Crea gráficos interactivos
    - **Pestaña "Operations"**: Realiza operaciones matemáticas instantáneas
@@ -118,6 +124,15 @@ Los presets te permiten guardar configuraciones de filtros que uses frecuentemen
 - Verifica que la ruta a la carpeta sea correcta
 - Asegúrate de que los archivos tengan extensión `.csv`
 - Verifica que tengas permisos de lectura en la carpeta
+
+### Error "Error when sniffing file" o archivos corruptos
+- **Síntoma**: Aparece error al intentar cargar datos con un archivo específico
+- **Solución**: Usa la sección "Exclude Problematic Files" en el sidebar
+  1. Expande la sección "Exclude Problematic Files"
+  2. Escribe el nombre del archivo problemático (ej: `asg-2005-01-31.csv`)
+  3. Haz clic en "Apply Exclusions"
+  4. Intenta ejecutar la query nuevamente
+- La aplicación seguirá funcionando con el resto de archivos
 
 ### Los filtros no funcionan
 - Verifica que los valores estén escritos correctamente

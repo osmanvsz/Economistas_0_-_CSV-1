@@ -79,15 +79,36 @@ def get_columns_and_sample_data(folder_path):
         if not csv_files:
             return None, None
         
-        # Read first file to get columns
-        first_file = csv_files[0]
-        sample_df = pd.read_csv(first_file, nrows=5, encoding='latin-1', sep='|')
-        columns = list(sample_df.columns)
+        # Try to read first non-problematic file
+        for csv_file in csv_files:
+            try:
+                sample_df = pd.read_csv(csv_file, nrows=5, encoding='latin-1', sep='|')
+                columns = list(sample_df.columns)
+                return columns, sample_df
+            except:
+                continue
         
-        return columns, sample_df
+        return None, None
     except Exception as e:
         st.error(f"Error reading CSV structure: {e}")
         return None, None
+
+def validate_csv_files(folder_path):
+    """Check which CSV files can be read successfully"""
+    problematic_files = []
+    valid_files = []
+    
+    csv_files = get_csv_files(folder_path)
+    
+    for csv_file in csv_files[:20]:  # Check first 20 files to avoid long wait
+        try:
+            # Try to read just 1 row
+            pd.read_csv(csv_file, nrows=1, encoding='latin-1', sep='|')
+            valid_files.append(csv_file.name)
+        except Exception as e:
+            problematic_files.append(csv_file.name)
+    
+    return valid_files, problematic_files
 
 @st.cache_resource
 def get_duckdb_connection():
@@ -99,55 +120,30 @@ def get_duckdb_connection():
     conn.execute("SET temp_directory='temp_duckdb';")  # Use temp directory for large operations
     return conn
 
-def get_row_count(conn, folder_path, filters, date_range=None):
-    """Get total row count without loading data - FAST"""
-    try:
-        normalized_path = str(Path(folder_path)).replace('\\', '/')
-        
-        query = f"""
-        SELECT COUNT(*) as total
-        FROM read_csv('{normalized_path}/*.csv', 
-                      delim='|', 
-                      header=true, 
-                      union_by_name=true, 
-                      encoding='latin-1',
-                      auto_detect=false,
-                      parallel=true)
-        """
-        
-        where_clauses = []
-        
-        if date_range and date_range[0] and date_range[1]:
-            where_clauses.append(
-                f"regexp_extract(filename, '(\\d{{4}}-\\d{{2}}-\\d{{2}})', 1) BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-            )
-        
-        for col, values in filters.items():
-            if values and len(values) > 0:
-                escaped_values = [str(v).replace("'", "''") for v in values]
-                values_str = "', '".join(escaped_values)
-                where_clauses.append(f"{col} IN ('{values_str}')")
-        
-        if where_clauses:
-            query += " WHERE " + " AND ".join(where_clauses)
-        
-        result = conn.execute(query).fetchone()
-        return result[0] if result else 0
-    except Exception as e:
-        st.error(f"Error counting rows: {e}")
-        return 0
-
-def build_query(folder_path, selected_columns, filters, date_range=None, use_sampling=False, sample_size=100000):
+def build_query(folder_path, selected_columns, filters, date_range=None, use_sampling=False, sample_size=100000, excluded_files=None):
     """Build DuckDB query with filters and optional sampling for performance"""
     # Normalize path for Windows
     normalized_path = str(Path(folder_path)).replace('\\', '/')
+    
+    # Get list of CSV files and exclude problematic ones
+    csv_files = get_csv_files(folder_path)
+    if excluded_files:
+        excluded_names = set(excluded_files)
+        csv_files = [f for f in csv_files if f.name not in excluded_names]
+    
+    if not csv_files:
+        return "SELECT 1 WHERE false"  # Empty result
+    
+    # Build explicit file list instead of wildcard
+    file_list = [str(f).replace('\\', '/') for f in csv_files]
+    files_str = "', '".join(file_list)
     
     # Base query with date extraction and robust CSV reading
     query = f"""
     SELECT 
         regexp_extract(filename, '(\\d{{4}}-\\d{{2}}-\\d{{2}})', 1) as fecha,
         {', '.join(selected_columns)}
-    FROM read_csv('{normalized_path}/*.csv', 
+    FROM read_csv(['{files_str}'], 
                   delim='|', 
                   header=true, 
                   filename=true, 
@@ -155,7 +151,11 @@ def build_query(folder_path, selected_columns, filters, date_range=None, use_sam
                   encoding='latin-1',
                   ignore_errors=true,
                   auto_detect=false,
-                  parallel=true)
+                  parallel=true,
+                  null_padding=true,
+                  quote='',
+                  escape='',
+                  strict_mode=false)
     """
     
     where_clauses = []
@@ -191,7 +191,14 @@ def execute_query(conn, query, limit=None):
         result = conn.execute(query).fetchdf()
         return result
     except Exception as e:
-        st.error(f"Error executing query: {e}")
+        error_msg = str(e)
+        st.error(f"Error executing query: {error_msg}")
+        
+        # Try to identify problematic file from error message
+        if 'sniffing file' in error_msg.lower():
+            st.warning("Tip: One or more CSV files may be corrupted. Use the 'Exclude Problematic Files' section in the sidebar to exclude specific files.")
+            st.info("Common file to exclude: **asg-2005-01-31.csv**")
+        
         return None
 
 def main():
@@ -211,6 +218,8 @@ def main():
         st.session_state.cached_query = None
     if 'last_config' not in st.session_state:
         st.session_state.last_config = None
+    if 'excluded_files' not in st.session_state:
+        st.session_state.excluded_files = []
     
     # Sidebar - Configuration
     st.sidebar.header("Configuration")
@@ -249,6 +258,48 @@ def main():
         return
     
     st.sidebar.success(f"Found {len(csv_files)} CSV files")
+    
+    # Exclude problematic files section
+    with st.sidebar.expander("Exclude Problematic Files"):
+        st.caption("Add filenames to exclude (one per line)")
+        
+        # Auto-detect button
+        if st.button("Auto-Detect Problematic Files", help="Scan first 20 files to find unreadable ones"):
+            with st.spinner("Scanning files..."):
+                valid, problematic = validate_csv_files(folder_path)
+                if problematic:
+                    st.session_state.excluded_files = problematic
+                    st.warning(f"Found {len(problematic)} problematic file(s)")
+                    st.rerun()
+                else:
+                    st.success("No problematic files found!")
+        
+        excluded_input = st.text_area(
+            "Excluded files",
+            value="\n".join(st.session_state.excluded_files),
+            height=100,
+            help="Enter filenames like: asg-2005-01-31.csv"
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Apply"):
+                st.session_state.excluded_files = [f.strip() for f in excluded_input.split('\n') if f.strip()]
+                st.session_state.cached_results = None
+                st.session_state.last_config = None
+                st.rerun()
+        with col2:
+            if st.button("Clear"):
+                st.session_state.excluded_files = []
+                st.session_state.cached_results = None
+                st.session_state.last_config = None
+                st.rerun()
+    
+    # Filter out excluded files
+    if st.session_state.excluded_files:
+        excluded_names = set(st.session_state.excluded_files)
+        csv_files = [f for f in csv_files if f.name not in excluded_names]
+        st.sidebar.info(f"Using {len(csv_files)} files ({len(st.session_state.excluded_files)} excluded)")
     
     columns, sample_data = get_columns_and_sample_data(folder_path)
     if columns is None:
@@ -462,7 +513,7 @@ def main():
     # Execute query if button clicked or if it's the first time
     if run_query or (st.session_state.cached_results is None and not config_changed):
         # Build query
-        query = build_query(folder_path, selected_columns, filters, date_range, use_sampling, sample_size)
+        query = build_query(folder_path, selected_columns, filters, date_range, use_sampling, sample_size, st.session_state.excluded_files)
         
         # Execute query
         start_time = time.time()
